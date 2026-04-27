@@ -15,7 +15,18 @@ public class UserController {
 
     @PostMapping("/login")
     public UserDto.UserResponseDto login(@RequestBody UserDto.LoginDto dto) {
+        System.out.println("");
+        System.out.println("");
+        System.out.print(dto);
+        System.out.println("");
+        System.out.println("");
+
         return service.login(dto);
+    }
+
+    @PostMapping("/register")
+    public UserDto.UserResponseDto register(@RequestBody UserDto.RegisterDto dto) {
+        return service.register(dto);
     }
 
     @PutMapping("/{id}")

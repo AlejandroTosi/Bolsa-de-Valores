@@ -1,18 +1,24 @@
 package com.Alejandro.BolsaDeValores.user;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
 public class UserService {
-    
+
     private final UserRepository userRepository;
+    private final TokenService tokenService;
+    private final PasswordEncoder passwordEncoder;
 
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
+        this.tokenService = new TokenService();
+        this.passwordEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
 
     }
 
@@ -20,22 +26,26 @@ public class UserService {
     public UserDto.UserResponseDto login(UserDto.LoginDto dto) {
 
         UserModel user = userRepository.findByEmail(dto.email())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() ->
+                        new RuntimeException("Invalid credentials"));
 
-        return mapToUserResponseDto(user);
-    }
-
-    @Transactional
-    public UserDto.UserResponseDto createUser(UserDto.CreateUserDto dto) {
-        if (userRepository.existsByEmail(dto.email())) {
-            throw new RuntimeException("Email already in use: " + dto.email());
+        if (!passwordEncoder.matches(
+                dto.password(),
+                user.getPassword_hash()
+        )) {
+            throw new RuntimeException("Invalid credentials");
         }
-        UserModel newUser = new UserModel();
-        newUser.setName(dto.username());
-        newUser.setEmail(dto.email());
-        UserModel savedUser = userRepository.save(newUser);
-        return mapToUserResponseDto(savedUser);
-            }
+
+        String token = tokenService.generateToken(user.getEmail());
+
+        return new UserDto.UserResponseDto(
+                token,
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getDiscord()
+        );
+    }
 
     @Transactional
     public UserDto.UserResponseDto updateUser(Long id, UserDto.UpdateUserDto dto) {
@@ -43,9 +53,8 @@ public class UserService {
         UserModel existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
-        // Check if new email already exists (and is different)
-        if (!existingUser.getEmail().equalsIgnoreCase(dto.email()) && 
-            userRepository.existsByEmail(dto.email())) {
+        if (!existingUser.getEmail().equalsIgnoreCase(dto.email()) &&
+                userRepository.existsByEmail(dto.email())) {
             throw new RuntimeException("Email already in use: " + dto.email());
         }
 
@@ -81,11 +90,30 @@ public class UserService {
 
     private UserDto.UserResponseDto mapToUserResponseDto(UserModel user) {
         return new UserDto.UserResponseDto(
+                null,
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getDiscord()
         );
+    }
+
+    @Autowired
+    private PasswordEncoder encoder;
+
+    public UserDto.UserResponseDto register(UserDto.RegisterDto dto) {
+        if (userRepository.existsByEmail(dto.email())) {
+            throw new RuntimeException("Email already in use: " + dto.email());
+
+        }
+        UserModel newUser = new UserModel();
+        newUser.setName(dto.username());
+        newUser.setEmail(dto.email());
+        newUser.setPassword_hash(
+                encoder.encode(dto.password())
+        );
+        newUser = userRepository.save(newUser);
+        return mapToUserResponseDto(newUser);
     }
 }
 
