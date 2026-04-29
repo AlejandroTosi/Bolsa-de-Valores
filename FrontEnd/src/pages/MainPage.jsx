@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 function MainPage() {
-  const navigate = useNavigate();
   const [alerts, setAlerts] = useState([]);
   const [symbol, setSymbol] = useState('');
   const [price, setPrice] = useState('');
   const [type, setType] = useState('ABOVE');
+  const [view, setView] = useState('create');
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -57,6 +57,13 @@ function MainPage() {
     }
   };
 
+  const fetchAlertByTicker = async (e) => {
+    e.preventDefault();
+    if (!symbol) return alert('Preencha o campo de símbolo');
+    {
+      const sucess = await api.fetchAlertByTicker(symbol);
+    }
+  };
   return (
     <div className="dashboard-container">
       <header className="header-main">
@@ -68,9 +75,9 @@ function MainPage() {
 
       <main className="main-layout">
         <section className="col-left">
-          <div className="card-layout">
-            <h3 className="title">Configurar Novo Alerta</h3>
-            <form className="form-alerta" onSubmit={handleCreateAlert}>
+          {view === 'create' ? (
+            <form className="form-adicionar" onSubmit={handleCreateAlert}>
+              <h3 className="title">Configurar Novo Alerta</h3>
               <input
                 className="input-field"
                 value={symbol}
@@ -92,7 +99,20 @@ function MainPage() {
                 Criar Alerta
               </button>
             </form>
-          </div>
+          ) : (
+            <form className="form-pesquisar" onSubmit={fetchAlertByTicker}>
+              <h4 className="title">Buscar Alerta Ticket</h4>
+              <input
+                className="input-field"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="Ex: BTCUSDT"
+              />
+            </form>
+          )}
+          <button className="btn-secondary" onClick={() => setView(view === 'create' ? 'search' : 'create')}>
+            {view === 'create' ? 'Buscar Alerta' : 'Adicionar Alerta'}
+          </button>
 
           <div className="card-layout" style={{ flex: 1 }}>
             <p className="subtitle">Gráfico de ativo em breve</p>
