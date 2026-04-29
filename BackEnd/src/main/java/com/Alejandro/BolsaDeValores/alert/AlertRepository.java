@@ -11,25 +11,22 @@ import java.util.List;
 
 @Repository
 public interface AlertRepository extends JpaRepository<AlertModel, Long> {
-    
+
     List<AlertModel> findByUserId(Long userId);
-    
+
     Page<AlertModel> findByUserId(Long userId, Pageable pageable);
-    
-    @Query("SELECT a FROM AlertModel a WHERE a.user.id = :userId AND a.active = true")
-    List<AlertModel> findActiveByUserId(@Param("userId") Long userId);
-    
-    @Query("SELECT a FROM AlertModel a WHERE a.active = true")
-    List<AlertModel> findAllActive();
-    
-    @Query("SELECT a FROM AlertModel a WHERE a.ticker = :ticker AND a.condition_type = :conditionType AND a.active = true")
+
+    List<AlertModel> findByUserIdAndActiveTrue(Long userId);
+
+    List<AlertModel> findByActiveTrue();
+
+
+    @Query("SELECT a FROM AlertModel a WHERE a.ticker = :ticker AND a.condition_type = :condition_type AND a.active = true")
     List<AlertModel> findByTickerAndCondition(
-            @Param("ticker") String ticker,
-            @Param("conditionType") AlertConditionType conditionType
+            String ticker,
+            AlertConditionType conditionType
     );
-    
+
     @Query("SELECT DISTINCT a.ticker FROM AlertModel a WHERE a.active = true")
     List<String> findAllActiveTickers();
-    }
-
-
+}

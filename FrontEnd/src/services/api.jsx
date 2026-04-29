@@ -13,9 +13,9 @@ const endpoints = {
     base: USERS_BASE,
     login: `${USERS_BASE}/login`,
     signup: `${USERS_BASE}/register`,
-    byId: (id) => `${USERS_BASE}/${id}`,
-    password: (id) => `${USERS_BASE}/${id}/password`,
-    discord: (id) => `${USERS_BASE}/${id}/discord`,
+    byId: (userId) => `${USERS_BASE}/${userId}`,
+    password: (userId) => `${USERS_BASE}/${userId}/password`,
+    discord: (userId) => `${USERS_BASE}/${userId}/discord`,
   },
   alerts: {
     base: ALERTS_BASE,
@@ -24,7 +24,6 @@ const endpoints = {
     toggle: (id) => `${ALERTS_BASE}/${id}/toggle`,
   },
 };
-
 const request = async (url, options = {}) => {
   try {
     const response = await fetch(url, {
@@ -47,20 +46,20 @@ const request = async (url, options = {}) => {
 };
 
 const api = {
-  // --- USERS ---
   login: (payload) => request(endpoints.users.login, { method: 'POST', body: JSON.stringify(payload) }),
 
   signup: (payload) => request(endpoints.users.signup, { method: 'POST', body: JSON.stringify(payload) }),
-  updateUser: (id, payload) => request(endpoints.users.byId(id), { method: 'PUT', body: JSON.stringify(payload) }),
 
-  updateUserPassword: (id, payload) =>
-    request(endpoints.users.password(id), { method: 'PUT', body: JSON.stringify(payload) }),
+  updateUser: (userId, payload) =>
+    request(endpoints.users.byId(userId), { method: 'PUT', body: JSON.stringify(payload) }),
 
-  updateUserDiscord: (id, payload) =>
-    request(endpoints.users.discord(id), { method: 'PUT', body: JSON.stringify(payload) }),
+  updateUserPassword: (userId, payload) =>
+    request(endpoints.users.password(userId), { method: 'PUT', body: JSON.stringify(payload) }),
 
-  // --- ALERTS ---
-  fetchActiveAlerts: () => request(endpoints.alerts.active),
+  updateUserDiscord: (userId, payload) =>
+    request(endpoints.users.discord(userId), { method: 'PUT', body: JSON.stringify(payload) }),
+
+  fetchActiveAlerts: (userId) => request(endpoints.alerts.active, { method: 'POST', body: JSON.stringify({ userId }) }),
 
   fetchAlertById: (id) => request(endpoints.alerts.byId(id)),
 

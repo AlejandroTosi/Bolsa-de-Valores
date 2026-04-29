@@ -8,7 +8,7 @@ import java.util.List;
 
 @Service
 public class AlertService {
-    
+
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
 
@@ -17,81 +17,85 @@ public class AlertService {
         this.userRepository = userRepository;
     }
 
-    public List<AlertDto.ResponseAlerts> getAlertsByUser(Long userId) {
-        return alertRepository.findByUserId(userId)
+    public List<AlertDto.ResponseAlerts> getActiveAlertsForUser(AlertDto.GetAlertDto dto) {
+        return alertRepository.findByUserIdAndActiveTrue(dto.userId())
                 .stream()
                 .map(this::mapToResponseAlerts)
                 .toList();
-
     }
 
-    public List<AlertDto.ResponseAlerts> getActiveAlertsByUser(Long userId) {
-        return alertRepository.findActiveByUserId(userId)
+    public List<AlertDto.ResponseAlerts> getAllAlertsByUser(AlertDto.GetAlertDto dto) {
+        return alertRepository.findByUserId(dto.userId())
                 .stream()
                 .map(this::mapToResponseAlerts)
                 .toList();
     }
 
     public AlertDto.ResponseAlerts getAlertById(Long id) {
-        AlertModel alert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(STR."Alert not found with id: \{id}"));
-        return mapToResponseAlerts(alert);
-    }
-
-
-    public AlertDto.ResponseAlerts createAlert(AlertDto.CreateAlertDto dto) {
-
-        var user = userRepository.findById(dto.userId())
-                .orElseThrow(() ->
-                        new RuntimeException("User not found with id: " + dto.userId()));
-
-        AlertModel alert = new AlertModel();
-
-        alert.setUser(user);
-        alert.setTicker(dto.ticker());
-        alert.setConditionType(dto.condition_type());
-        alert.setTargetValue(dto.target_value());
-        alert.setActive(true);
-        alert.setNotificationChannel(
-                dto.notification_channel() != null
-                        ? dto.notification_channel()
-                        : "DISCORD"
-        );
-        alert.setDiscordWebhookUrl(dto.discord_webhook_url());
-
-        AlertModel savedAlert = alertRepository.save(alert);
-
-        return mapToResponseAlerts(savedAlert);
+        return alertRepository.findById(id)
+                .map(this::mapToResponseAlerts)
+                .orElseThrow(() -> new RuntimeException("Alerta não encontrado com id: " + id));
     }
 
     @Transactional
-    public AlertDto.ResponseAlerts toggleAlert(Long id,AlertDto.ToggleAlertDto dto) {
-        AlertModel alert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(STR."Alert not found with id: \{id}"));
+    public AlertDto.ResponseAlerts createAlert(AlertDto.CreateAlertDto dto) {
+        var user = userRepository.findById(dto.userId())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        if (!alert.getUser().getId().equals(dto.user_id())) {
-            throw new IllegalArgumentException("User not authorized to toggle this alert");
-        }
+        AlertModel alert = new AlertModel();
+        alert.setUser(user);
+        alert.setTicker(dto.ticker());
+        alert.setConditionType(dto.conditionType());
+        alert.setTargetValue(dto.targetValue());
+        alert.setActive(true);
+        alert.setNotificationChannel(dto.notification_channel() != null ? dto.notification_channel() : "DISCORD");
+        alert.setDiscordWebhookUrl(dto.discord_webhook_url());
+
+        return mapToResponseAlerts(alertRepository.save(alert));
+    }
+
+    @Transactional
+    public AlertDto.ResponseAlerts toggleAlert(Long id, AlertDto.ToggleAlertDto dto) {
+        AlertModel alert = alertRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Alerta não encontrado"));
+
+        validateOwnership(alert, dto.userId());
 
         alert.setActive(dto.active());
-        AlertModel updatedAlert = alertRepository.save(alert);
-        return mapToResponseAlerts(updatedAlert);
+        return mapToResponseAlerts(alert);
     }
 
     @Transactional
     public void deleteAlert(Long id, Long userId) {
-                AlertModel alert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(STR."Alert not found with id: \{id}"));
+        AlertModel alert = alertRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Alerta não encontrado"));
 
-        if (!alert.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("User not authorized to delete this alert");
-        }
-
-        alertRepository.deleteById(id);
+        validateOwnership(alert, userId);
+        alertRepository.delete(alert);
     }
 
-    public List<String> getActiveAlertTickers() {
-        return alertRepository.findAllActiveTickers();
+    @Transactional
+    public AlertDto.ResponseAlerts updateAlert(Long id, AlertDto.UpdateAlertDto dto) {
+        AlertModel alert = alertRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Alerta não encontrado"));
+
+
+
+        alert.setTicker(dto.ticker());
+        alert.setConditionType(dto.condition_type());
+        alert.setTargetValue(dto.target_value());
+        alert.setActive(dto.active());
+        alert.setNotificationChannel(dto.notification_channel() != null ? dto.notification_channel() : "DISCORD");
+        alert.setDiscordWebhookUrl(dto.discord_webhook_url());
+
+        return mapToResponseAlerts(alert);
+    }
+
+
+    private void validateOwnership(AlertModel alert, Long userId) {
+        if (!alert.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Usuário não autorizado a modificar este alerta");
+        }
     }
 
     private AlertDto.ResponseAlerts mapToResponseAlerts(AlertModel alert) {
@@ -101,26 +105,11 @@ public class AlertService {
                 alert.getTicker(),
                 alert.getConditionType(),
                 alert.getTargetValue(),
-                alert.getActive(), // Fixed from .setActive()
+                alert.getActive(),
                 alert.getLastTriggeredAt(),
                 alert.getNotificationChannel(),
                 alert.getCreatedAt(),
                 alert.getUpdatedAt()
         );
-    }
-    @Transactional
-    public AlertDto.ResponseAlerts updateAlert(Long id, AlertDto.UpdateAlertDto dto) {
-        AlertModel alert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(STR."Alert not found with id: \{id}"));
-
-        alert.setTicker(dto.ticker());
-        alert.setConditionType(dto.condition_type());
-        alert.setTargetValue(dto.target_value());
-        alert.setActive(dto.active());
-        alert.setNotificationChannel(dto.notification_channel() != null ? dto.notification_channel() : "DISCORD");
-        alert.setDiscordWebhookUrl(dto.discord_webhook_url());
-
-        AlertModel updatedAlert = alertRepository.save(alert);
-        return mapToResponseAlerts(updatedAlert);
     }
 }

@@ -1,32 +1,55 @@
-import ButtonBase from '../components/ButtonBase';
-import Layout from '../components/Layout';
+import { useNavigate } from 'react-router-dom';
 import '../App.css';
 import { useState, useEffect } from 'react';
+import api from '../services/api';
 
-function MainPage({ user }) {
-  //useEffect(() => {
-  //const loggedUser = localStorage.getItem('@App:user');
-
-  //if(!loggedUser){
-  // Navigate('/login');{
-  // TODO: implementar redirecionamento para login caso usuário não esteja logado
-  //}
-  //}
-
+function MainPage() {
+  const navigate = useNavigate();
   const [alerts, setAlerts] = useState([]);
+  const [symbol, setSymbol] = useState('');
+  const [price, setPrice] = useState('');
+  const [type, setType] = useState('ABOVE');
 
-  const uservalidation = () => {
-    if (user === null) {
-      return <p>TODO: Implementar validação de usuário</p>;
+  // 1. Token validation
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+    } else {
+      loadAlerts();
+    }
+  }, [navigate]);
+
+  // 2. Load alert list
+  const loadAlerts = async () => {
+    const data = await api.fetchActiveAlerts();
+    if (data) setAlerts(data);
+  };
+
+  // 3. New alert
+  const handleCreateAlert = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      symbol: symbol.toUpperCase(),
+      targetPrice: parseFloat(price),
+      alertType: type, // ABOVE ou BELOW
+    };
+
+    const result = await api.postAlert(payload);
+    if (result) {
+      setSymbol('');
+      setPrice('');
+      loadAlerts(); //Refresh
+      alert('Alerta criado com sucesso!');
     }
   };
-  const fetchAlerts = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/api/alerts');
-      const data = await response.json();
-      setAlerts(data);
-    } catch (error) {
-      console.error('Erro ao buscar alertas:', error);
+
+  // 4. Deletar Alerta
+  const handleDelete = async (id) => {
+    const success = await api.deleteAlert(id);
+    if (success) {
+      setAlerts(alerts.filter((a) => a.id !== id));
     }
   };
 
@@ -44,13 +67,19 @@ function MainPage({ user }) {
         <section className="col-left">
           <div className="card-layout">
             <h3 className="title">TODO: Implementar formulário de alerta</h3>
-            <form className="form-alerta">
-              <input className="input-field" style={{ gridColumn: 'span 2' }} placeholder="Ativo (PETR4)" />
-              <select className="input-field">
-                <option>Acima de</option>
-                <option>Abaixo de</option>
+            <form className="form-alerta" onSubmit={handleCreateAlert}>
+              <input value={symbol} onChange={(e) => setSymbol(e.target.value)} placeholder="Pesquisar ativo" />{' '}
+              <select className="input-field" value={type} onChange={(e) => setType(e.target.value)}>
+                <option value="ABOVE">Acima de</option>
+                <option value="BELOW">Abaixo de</option>
               </select>
-              <input className="input-field" type="number" placeholder="Preço" />
+              <input
+                className="input-field"
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="Preço"
+              />
               <button className="btn-primary">Criar Alerta</button>
             </form>
           </div>

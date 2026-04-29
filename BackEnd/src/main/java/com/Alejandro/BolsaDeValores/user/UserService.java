@@ -1,11 +1,8 @@
 package com.Alejandro.BolsaDeValores.user;
 
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 @Service
 public class UserService {
@@ -14,107 +11,85 @@ public class UserService {
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
 
-
-    public UserService(UserRepository userRepository) {
+    // Use constructor injection for all dependencies
+    public UserService(UserRepository userRepository, TokenService tokenService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.tokenService = new TokenService();
-        this.passwordEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-
+        this.tokenService = tokenService;
+        this.passwordEncoder = passwordEncoder;
     }
 
-
-    public UserDto.UserResponseDto login(UserDto.LoginDto dto) {
-
+    public UserDto.AuthResponseDto login(UserDto.LoginDto dto) {
         UserModel user = userRepository.findByEmail(dto.email())
-                .orElseThrow(() ->
-                        new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
-        if (!passwordEncoder.matches(
-                dto.password(),
-                user.getPassword_hash()
-        )) {
+        if (!passwordEncoder.matches(dto.password(), user.getPassword_hash())) {
             throw new RuntimeException("Invalid credentials");
         }
 
         String token = tokenService.generateToken(user.getEmail());
 
-        return new UserDto.UserResponseDto(
+        // Match the record structure: String, long, UserResponseDto
+        return new UserDto.AuthResponseDto(
                 token,
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getDiscord()
+                86400000, // 24 hours in millis
+                mapToUserResponseDto(user)
         );
     }
 
     @Transactional
-    public UserDto.UserResponseDto updateUser(Long id, UserDto.UpdateUserDto dto) {
+    public UserDto.UserResponseDto register(UserDto.RegisterDto dto) {
+        if (userRepository.existsByEmail(dto.email())) {
+            throw new RuntimeException("Email already in use: " + dto.email());
+        }
 
+        UserModel newUser = new UserModel();
+        newUser.setName(dto.username());
+        newUser.setEmail(dto.email());
+        newUser.setPassword_hash(passwordEncoder.encode(dto.password()));
+
+        return mapToUserResponseDto(userRepository.save(newUser));
+    }
+
+    @Transactional
+    public UserDto.UserResponseDto updateUser(Long id, UserDto.UpdateUserDto dto) {
         UserModel existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!existingUser.getEmail().equalsIgnoreCase(dto.email()) &&
                 userRepository.existsByEmail(dto.email())) {
-            throw new RuntimeException("Email already in use: " + dto.email());
+            throw new RuntimeException("Email already in use");
         }
 
         existingUser.setName(dto.username());
         existingUser.setEmail(dto.email());
-
-        UserModel updatedUser = userRepository.save(existingUser);
-        return mapToUserResponseDto(updatedUser);
+        return mapToUserResponseDto(userRepository.save(existingUser));
     }
 
     @Transactional
     public void changePassword(Long id, UserDto.ChangePasswordDto dto) {
-
         UserModel user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setPassword_hash(dto.new_password());
-
+        // Logic fix: Encode the new password before saving!
+        user.setPassword_hash(passwordEncoder.encode(dto.new_password()));
         userRepository.save(user);
     }
 
     @Transactional
     public UserDto.UserResponseDto addDiscordId(Long id, UserDto.AddDiscordIdDto dto) {
-
         UserModel user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         user.setDiscord(dto.discord());
-        UserModel updatedUser = userRepository.save(user);
-        return mapToUserResponseDto(updatedUser);
+        return mapToUserResponseDto(userRepository.save(user));
     }
-
 
     private UserDto.UserResponseDto mapToUserResponseDto(UserModel user) {
         return new UserDto.UserResponseDto(
-                null,
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getDiscord()
         );
     }
-
-    @Autowired
-    private PasswordEncoder encoder;
-
-    public UserDto.UserResponseDto register(UserDto.RegisterDto dto) {
-        if (userRepository.existsByEmail(dto.email())) {
-            throw new RuntimeException("Email already in use: " + dto.email());
-
-        }
-        UserModel newUser = new UserModel();
-        newUser.setName(dto.username());
-        newUser.setEmail(dto.email());
-        newUser.setPassword_hash(
-                encoder.encode(dto.password())
-        );
-        newUser = userRepository.save(newUser);
-        return mapToUserResponseDto(newUser);
-    }
 }
-
-

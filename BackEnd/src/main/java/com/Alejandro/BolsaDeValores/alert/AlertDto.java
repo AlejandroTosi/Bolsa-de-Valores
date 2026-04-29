@@ -11,54 +11,62 @@ public class AlertDto {
 
     public record ResponseAlerts(
             Long id,
-            Long user_id,
+            Long userId,
             String ticker,
-            AlertConditionType condition_type,
-            BigDecimal target_value,
+            AlertConditionType conditionType,
+            BigDecimal targetValue,
             Boolean active,
-            LocalDateTime last_triggered_at,
+            LocalDateTime lastTriggeredAt,
             String notification_channel,
-            LocalDateTime created_at,
-            LocalDateTime updated_at
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
     ){}
 
     public record CreateAlertDto(
-
-            @NotNull(message = "User ID cannot be blank")
+            @NotNull(message = "User ID é obrigatório")
             Long userId,
-            @NotBlank(message = "Ticker cannot be blank")
+
+            @NotBlank(message = "Ticker não pode estar vazio")
             String ticker,
-            
-            @NotNull(message = "Condition type cannot be null")
-            AlertConditionType condition_type,
-            
-            @NotNull(message = "Target value cannot be null")
-            @Positive(message = "Target value must be positive")
-            BigDecimal target_value,
-            
+
+            @NotNull(message = "Tipo de condição é obrigatório")
+            AlertConditionType conditionType,
+
+            @NotNull(message = "Valor alvo é obrigatório")
+            @Positive(message = "O valor deve ser maior que zero")
+            BigDecimal targetValue,
+
             String notification_channel,
             String discord_webhook_url
     ){}
 
     public record UpdateAlertDto(
-            @NotBlank(message = "Ticker cannot be blank")
+            @NotBlank(message = "Ticker não pode estar vazio")
             String ticker,
-            
-            @NotNull(message = "Condition type cannot be null")
+
+            @NotNull(message = "Tipo de condição é obrigatório")
             AlertConditionType condition_type,
-            
-            @NotNull(message = "Target value cannot be null")
-            @Positive(message = "Target value must be positive")
+
+            @NotNull(message = "Valor alvo é obrigatório")
+            @Positive(message = "O valor deve ser maior que zero")
             BigDecimal target_value,
-            
+
             Boolean active,
             String notification_channel,
             String discord_webhook_url
     ){}
 
     public record ToggleAlertDto(
-            Long user_id,
+            @NotNull(message = "User ID é obrigatório")
+            Long userId,
+
+            @NotNull(message = "O status 'active' deve ser informado")
             Boolean active
     ){}
 
+    // Se você realmente precisar passar o ID do usuário para buscar alertas:
+    public record GetAlertDto(
+            @NotNull(message = "User ID é obrigatório")
+            Long userId
+    ){}
 }

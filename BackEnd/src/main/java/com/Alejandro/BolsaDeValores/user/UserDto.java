@@ -45,7 +45,6 @@ public class UserDto {
     ){}
 
     public record UserResponseDto(
-            String token,
             Long id,
             String name,
             String email,
@@ -63,8 +62,6 @@ public class UserDto {
 
     public record AuthResponseDto(
             String access_token,
-            String refresh_token,
-            String token_type,
             long expires_in,
             UserResponseDto user
     ){}

@@ -1,5 +1,8 @@
 package com.Alejandro.BolsaDeValores.alert;
 
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/alerts")
-
 public class AlertController {
 
     private final AlertService alertService;
@@ -17,42 +19,50 @@ public class AlertController {
         this.alertService = alertService;
     }
 
+    // Alterado para GET e simplificado
     @GetMapping("/active")
-    public List<AlertDto.ResponseAlerts> getActiveAlertsForUser(@RequestParam Long userId) {
-        return alertService.getAlertsByUser(userId);
+    public ResponseEntity<List<AlertDto.ResponseAlerts>> getActiveAlertsForUser(AlertDto.GetAlertDto dto) {
+        return ResponseEntity.ok(alertService.getActiveAlertsForUser(dto));
     }
 
     @GetMapping("/{id}")
-        public AlertDto.ResponseAlerts getAlertById(@PathVariable Long id){
-        return alertService.getAlertById(id);
+    public ResponseEntity<AlertDto.ResponseAlerts> getAlertById(@PathVariable Long id) {
+        return ResponseEntity.ok(alertService.getAlertById(id));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<AlertDto.ResponseAlerts>> getAllAlertsForUser(AlertDto.GetAlertDto dto) {
+        return ResponseEntity.ok(alertService.getAllAlertsByUser(dto));
     }
 
     @PostMapping
-    public ResponseEntity<AlertDto.ResponseAlerts> createAlert(
-            @RequestBody AlertDto.CreateAlertDto dto) {
+    public ResponseEntity<AlertDto.ResponseAlerts> createAlert(@Valid @RequestBody AlertDto.CreateAlertDto dto) {
         AlertDto.ResponseAlerts alert = alertService.createAlert(dto);
-        return ResponseEntity.ok(alert);
+        // O ideal para POST é retornar 201 Created
+        return ResponseEntity.status(HttpStatus.CREATED).body(alert);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> updateAlert(@PathVariable Long id,@RequestBody AlertDto.UpdateAlertDto dto) {
-        AlertDto.ResponseAlerts alerts = alertService.updateAlert(id, dto);
-        return ResponseEntity.ok(alerts);
+    public ResponseEntity<AlertDto.ResponseAlerts> updateAlert(
+            @PathVariable Long id,
+            @Valid @RequestBody AlertDto.UpdateAlertDto dto) {
+        return ResponseEntity.ok(alertService.updateAlert(id, dto));
     }
 
-    @PutMapping("/{id}/toggle")
-    public ResponseEntity<Object> toggleAlert(@PathVariable Long id, @RequestBody AlertDto.ToggleAlertDto dto) {
+    @PatchMapping("/{id}/toggle") // Patch é mais adequado para atualizações parciais
+    public ResponseEntity<AlertDto.ResponseAlerts> toggleAlert(
+            @PathVariable Long id,
+            @RequestBody AlertDto.ToggleAlertDto dto) {
         AlertDto.ResponseAlerts updated = alertService.toggleAlert(id, dto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(updated); // Agora retorna o objeto atualizado
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAlert(
             @PathVariable Long id,
             @RequestParam Long userId) {
-
         alertService.deleteAlert(id, userId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build(); // 204 No Content é o padrão para Delete
     }
 }
 
