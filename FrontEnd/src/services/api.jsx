@@ -45,7 +45,7 @@ const api = {
 
   fetchAllAlerts: (userId) => request(`${ALERTS_BASE}/all?userId=${userId}`),
 
-  fetchAlertById: (id) => request(`${ALERTS_BASE}/${id}`),
+  fetchAlertByTicker: (ticker) => request(`${ALERTS_BASE}/ticker/${ticker}`),
 
   postAlert: (payload) => request(ALERTS_BASE, { method: 'POST', body: JSON.stringify(payload) }),
 

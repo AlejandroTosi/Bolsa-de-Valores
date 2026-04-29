@@ -1,7 +1,6 @@
 package com.Alejandro.BolsaDeValores.alert;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +22,6 @@ public class AlertController {
     @GetMapping("/active")
     public ResponseEntity<List<AlertDto.ResponseAlerts>> getActiveAlertsForUser(AlertDto.GetAlertDto dto) {
         return ResponseEntity.ok(alertService.getActiveAlertsForUser(dto));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<AlertDto.ResponseAlerts> getAlertById(@PathVariable Long id) {
-        return ResponseEntity.ok(alertService.getAlertById(id));
     }
 
     @GetMapping("/all")

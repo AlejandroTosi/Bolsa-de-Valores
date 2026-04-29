@@ -108,6 +108,7 @@ function MainPage() {
                 onChange={(e) => setSymbol(e.target.value)}
                 placeholder="Ex: BTCUSDT"
               />
+              <button className="btn-primary" onClick={fetchAlertByTicker}></button>
             </form>
           )}
           <button className="btn-secondary" onClick={() => setView(view === 'create' ? 'search' : 'create')}>
