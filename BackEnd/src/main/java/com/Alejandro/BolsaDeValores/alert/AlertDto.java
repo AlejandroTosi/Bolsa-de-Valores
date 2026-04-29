@@ -64,7 +64,6 @@ public class AlertDto {
             Boolean active
     ){}
 
-    // Se você realmente precisar passar o ID do usuário para buscar alertas:
     public record GetAlertDto(
             @NotNull(message = "User ID é obrigatório")
             Long userId

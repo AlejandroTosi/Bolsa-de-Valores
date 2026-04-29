@@ -19,7 +19,7 @@ public class AlertController {
         this.alertService = alertService;
     }
 
-    // Alterado para GET e simplificado
+
     @GetMapping("/active")
     public ResponseEntity<List<AlertDto.ResponseAlerts>> getActiveAlertsForUser(AlertDto.GetAlertDto dto) {
         return ResponseEntity.ok(alertService.getActiveAlertsForUser(dto));

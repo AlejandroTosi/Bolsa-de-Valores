@@ -4,25 +4,26 @@ import Login from './pages/Login';
 import MainPage from './pages/MainPage';
 
 function App() {
-  {
-    /*const [user, setUser] = useState({ userId: 1, name: 'Dev Teste' });*/
-  }
-
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
 
   return (
     <Router>
       <Routes>
         {/* Login */}
-        /*
         <Route path="/login" element={<Login onLogin={setUser} />} />
-        */
+
         {/* MainPage */}
-        <Route path="/MainPage" element={user ? <MainPage user={user} /> : <Navigate to="/login" />} />
+        <Route path="/MainPage" element={user ? <MainPage /> : <Navigate to="/login" replace />} />
+
         {/* Redirect if not authenticated */}
-        /*
-        <Route path="*" element={<Navigate to={user ? '/MainPage' : '/login'} />} />
-        */
+        <Route path="*" element={<Navigate to={user ? '/MainPage' : '/login'} replace />} />
       </Routes>
     </Router>
   );

@@ -15,12 +15,6 @@ public class UserController {
 
     @PostMapping("/login")
     public UserDto.AuthResponseDto login(@RequestBody UserDto.LoginDto dto) {
-        System.out.println("");
-        System.out.println("");
-        System.out.print(dto);
-        System.out.println("");
-        System.out.println("");
-
         return service.login(dto);
     }
 

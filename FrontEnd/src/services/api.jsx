@@ -1,36 +1,19 @@
 const BASE_URL = 'http://localhost:8080/api';
-
 const USERS_BASE = `${BASE_URL}/users`;
 const ALERTS_BASE = `${BASE_URL}/alerts`;
 
 const getToken = () => {
-  const token = localStorage.getItem('token');
-  return token ? JSON.parse(token) : null;
+  return localStorage.getItem('token');
 };
 
-const endpoints = {
-  users: {
-    base: USERS_BASE,
-    login: `${USERS_BASE}/login`,
-    signup: `${USERS_BASE}/register`,
-    byId: (userId) => `${USERS_BASE}/${userId}`,
-    password: (userId) => `${USERS_BASE}/${userId}/password`,
-    discord: (userId) => `${USERS_BASE}/${userId}/discord`,
-  },
-  alerts: {
-    base: ALERTS_BASE,
-    active: `${ALERTS_BASE}/active`,
-    byId: (id) => `${ALERTS_BASE}/${id}`,
-    toggle: (id) => `${ALERTS_BASE}/${id}/toggle`,
-  },
-};
 const request = async (url, options = {}) => {
+  const token = getToken();
   try {
     const response = await fetch(url, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
     });
@@ -46,30 +29,35 @@ const request = async (url, options = {}) => {
 };
 
 const api = {
-  login: (payload) => request(endpoints.users.login, { method: 'POST', body: JSON.stringify(payload) }),
+  login: (payload) => request(`${USERS_BASE}/login`, { method: 'POST', body: JSON.stringify(payload) }),
 
-  signup: (payload) => request(endpoints.users.signup, { method: 'POST', body: JSON.stringify(payload) }),
+  signup: (payload) => request(`${USERS_BASE}/register`, { method: 'POST', body: JSON.stringify(payload) }),
 
-  updateUser: (userId, payload) =>
-    request(endpoints.users.byId(userId), { method: 'PUT', body: JSON.stringify(payload) }),
+  updateUser: (userId, payload) => request(`${USERS_BASE}/${userId}`, { method: 'PUT', body: JSON.stringify(payload) }),
 
   updateUserPassword: (userId, payload) =>
-    request(endpoints.users.password(userId), { method: 'PUT', body: JSON.stringify(payload) }),
+    request(`${USERS_BASE}/${userId}/password`, { method: 'PUT', body: JSON.stringify(payload) }),
 
   updateUserDiscord: (userId, payload) =>
-    request(endpoints.users.discord(userId), { method: 'PUT', body: JSON.stringify(payload) }),
+    request(`${USERS_BASE}/${userId}/discord`, { method: 'PUT', body: JSON.stringify(payload) }),
 
-  fetchActiveAlerts: (userId) => request(endpoints.alerts.active, { method: 'POST', body: JSON.stringify({ userId }) }),
+  fetchActiveAlerts: (userId) => request(`${ALERTS_BASE}/active?userId=${userId}`),
 
-  fetchAlertById: (id) => request(endpoints.alerts.byId(id)),
+  fetchAllAlerts: (userId) => request(`${ALERTS_BASE}/all?userId=${userId}`),
 
-  postAlert: (payload) => request(endpoints.alerts.base, { method: 'POST', body: JSON.stringify(payload) }),
+  fetchAlertById: (id) => request(`${ALERTS_BASE}/${id}`),
 
-  updateAlert: (id, payload) => request(endpoints.alerts.byId(id), { method: 'PUT', body: JSON.stringify(payload) }),
+  postAlert: (payload) => request(ALERTS_BASE, { method: 'POST', body: JSON.stringify(payload) }),
 
-  toggleAlert: (id) => request(endpoints.alerts.toggle(id), { method: 'PUT' }),
+  updateAlert: (id, payload) => request(`${ALERTS_BASE}/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
 
-  deleteAlert: (id) => request(endpoints.alerts.byId(id), { method: 'DELETE' }),
+  toggleAlert: (id, userId, active) =>
+    request(`${ALERTS_BASE}/${id}/toggle`, {
+      method: 'PATCH',
+      body: JSON.stringify({ userId, active }),
+    }),
+
+  deleteAlert: (id, userId) => request(`${ALERTS_BASE}/${id}?userId=${userId}`, { method: 'DELETE' }),
 };
 
 export default api;
