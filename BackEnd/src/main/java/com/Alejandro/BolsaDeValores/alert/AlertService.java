@@ -18,14 +18,14 @@ public class AlertService {
     }
 
     public List<AlertDto.ResponseAlerts> getActiveAlertsForUser(AlertDto.GetAlertDto dto) {
-        return alertRepository.findByUserIdAndActiveTrue(dto.userId())
+        return alertRepository.findByUser_IdAndActiveTrue(dto.userId())
                 .stream()
                 .map(this::mapToResponseAlerts)
                 .toList();
     }
 
     public List<AlertDto.ResponseAlerts> getAllAlertsByUser(AlertDto.GetAlertDto dto) {
-        return alertRepository.findByUserId(dto.userId())
+        return alertRepository.findByUser_Id(dto.userId())
                 .stream()
                 .map(this::mapToResponseAlerts)
                 .toList();

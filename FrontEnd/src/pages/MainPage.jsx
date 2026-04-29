@@ -8,7 +8,7 @@ function MainPage() {
   const [alerts, setAlerts] = useState([]);
   const [symbol, setSymbol] = useState('');
   const [price, setPrice] = useState('');
-  const [type, setType] = useState('ABOVE'); // Matches your <option> values
+  const [type, setType] = useState('ABOVE');
 
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -63,7 +63,7 @@ function MainPage() {
         <div className="logo">
           Invest+ <span>Alerts</span>
         </div>
-        <div className="user-profile">Olá, {user?.username || 'Usuário'}</div>
+        <div className="user-profile">Olá, {user?.username || 'user'}</div>
       </header>
 
       <main className="main-layout">
@@ -95,7 +95,7 @@ function MainPage() {
           </div>
 
           <div className="card-layout" style={{ flex: 1 }}>
-            <p className="subtitle">Gráfico de {symbol || 'Ativo'} (Em breve)</p>
+            <p className="subtitle">Gráfico de ativo em breve</p>
           </div>
         </section>
 

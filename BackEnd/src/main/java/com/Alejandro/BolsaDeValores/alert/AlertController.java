@@ -38,7 +38,7 @@ public class AlertController {
     @PostMapping
     public ResponseEntity<AlertDto.ResponseAlerts> createAlert(@Valid @RequestBody AlertDto.CreateAlertDto dto) {
         AlertDto.ResponseAlerts alert = alertService.createAlert(dto);
-        // O ideal para POST é retornar 201 Created
+
         return ResponseEntity.status(HttpStatus.CREATED).body(alert);
     }
 
@@ -49,12 +49,12 @@ public class AlertController {
         return ResponseEntity.ok(alertService.updateAlert(id, dto));
     }
 
-    @PatchMapping("/{id}/toggle") // Patch é mais adequado para atualizações parciais
+    @PatchMapping("/{id}/toggle")
     public ResponseEntity<AlertDto.ResponseAlerts> toggleAlert(
             @PathVariable Long id,
             @RequestBody AlertDto.ToggleAlertDto dto) {
         AlertDto.ResponseAlerts updated = alertService.toggleAlert(id, dto);
-        return ResponseEntity.ok(updated); // Agora retorna o objeto atualizado
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
@@ -62,7 +62,7 @@ public class AlertController {
             @PathVariable Long id,
             @RequestParam Long userId) {
         alertService.deleteAlert(id, userId);
-        return ResponseEntity.noContent().build(); // 204 No Content é o padrão para Delete
+        return ResponseEntity.noContent().build();
     }
 }
 
